@@ -149,3 +149,13 @@ APK 产物路径：`composeApp/build/outputs/apk/debug/composeApp-debug.apk`
 ## 防火墙/代理
 
 `gradle.properties` 中配有机场代理（HTTP/HTTPS 127.0.0.1:7897）。在其他网络环境下可能需要注释掉这些配置。
+
+## 镜像仓库
+
+项目在 Gitee 有一个只读镜像（仅作国内加速用，不主动推送）：
+
+```
+https://gitee.com/qwm-0/biscuit-bag.git
+```
+
+**不要向 gitee 远端推送代码**，除非用户明确要求。日常推送只走 GitHub origin。
