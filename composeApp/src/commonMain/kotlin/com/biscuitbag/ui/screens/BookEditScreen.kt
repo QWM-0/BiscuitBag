@@ -116,6 +116,24 @@ fun BookEditScreen(
                 }
             }
 
+            // 厚读模式开关
+            val thickMode by viewModel.thickMode.collectAsState()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("厚读模式", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        if (thickMode) "分章节管理饼干屑" else "整本书共用饼干屑",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = thickMode, onCheckedChange = { viewModel.setThickMode(it) })
+            }
+
             OutlinedTextField(
                 value = title,
                 onValueChange = { viewModel.updateTitle(it) },

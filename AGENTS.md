@@ -87,7 +87,8 @@ BiscuitBag/
 1. 书籍标题：type=0（书本）时自动包裹 `《》`，ViewModel 的 `save()` 方法处理；编辑时 `unwrapTitle()` 去掉 `《》` 再填入输入框。
 2. 章节目录：留空自动填充 `第N章`，N 为 `max(chapterNumber) + 1`。
 3. 饼干屑数量：支持"按页数估算"（每页×4段）和手动输入两种方式。
-4. 导航路由参数：`bookId` 和 `chapterId` 均使用 `NavType.LongType`。
+4. **厚读模式**：`thickMode` 控制是否分章节。开启（默认）→ 分章节管理饼干屑；关闭 → 整本书共用一套饼干屑，点击书籍直接进入阅读页，跳过章节列表。
+5. 导航路由参数：`bookId` 和 `chapterId` 均使用 `NavType.LongType`。
 5. Entity 类定义为 data class，放置于 `BiscuitBagRepository.kt` 文件底部，并有 SQLDelight 生成类型的私有扩展函数 `toEntity()`。
 6. 导入路由（`"import"`）：composable 中直接调用 `onImportEpub?.invoke()` 并 `popBackStack()`。
 7. EPUB 导入在 `MainActivity` 中处理（非 Composable），导入完成后调用 `recreate()` 刷新界面。

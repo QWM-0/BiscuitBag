@@ -31,6 +31,9 @@ class BookEditViewModel(
     private val _coverPath = MutableStateFlow("")
     val coverPath: StateFlow<String> = _coverPath.asStateFlow()
 
+    private val _thickMode = MutableStateFlow(true)
+    val thickMode: StateFlow<Boolean> = _thickMode.asStateFlow()
+
     private val _isEdit = MutableStateFlow(false)
     val isEdit: StateFlow<Boolean> = _isEdit.asStateFlow()
 
@@ -43,6 +46,7 @@ class BookEditViewModel(
                 _isEdit.value = true
                 _bookType.value = book.type
                 _coverPath.value = book.coverPath
+                _thickMode.value = book.thickMode
                 _title.value = if (book.type == 0) unwrapTitle(book.title) else book.title
                 _author.value = book.author
                 _totalPages.value = book.totalPages.toString()
@@ -55,6 +59,7 @@ class BookEditViewModel(
     fun updateTotalPages(value: String) { _totalPages.value = value }
     fun setBookType(value: Int) { _bookType.value = value }
     fun setCoverPath(value: String) { _coverPath.value = value }
+    fun setThickMode(value: Boolean) { _thickMode.value = value }
 
     fun save() {
         val pages = _totalPages.value.toIntOrNull() ?: 0
@@ -62,9 +67,9 @@ class BookEditViewModel(
         val finalTitle = if (_bookType.value == 0) "《$rawTitle》" else rawTitle
 
         if (_isEdit.value && bookId != null) {
-            repository.updateBook(bookId, finalTitle, _author.value, pages, _bookType.value, _coverPath.value)
+            repository.updateBook(bookId, finalTitle, _author.value, pages, _bookType.value, _coverPath.value, _thickMode.value)
         } else {
-            repository.insertBook(finalTitle, _author.value, pages, _bookType.value, _coverPath.value)
+            repository.insertBook(finalTitle, _author.value, pages, _bookType.value, _coverPath.value, _thickMode.value)
         }
         _saved.value = true
     }

@@ -24,24 +24,26 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
         return queries.selectBookById(id).executeAsOneOrNull()?.toEntity()
     }
 
-    fun insertBook(title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "") {
+    fun insertBook(title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "", thickMode: Boolean = true) {
         queries.insertBook(
             title = title,
             author = author,
             totalPages = totalPages.toLong(),
             type = type.toLong(),
             coverPath = coverPath,
-            createdAt = Clock.System.now().toEpochMilliseconds()
+            createdAt = Clock.System.now().toEpochMilliseconds(),
+            thickMode = if (thickMode) 1L else 0L
         )
     }
 
-    fun updateBook(id: Long, title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "") {
+    fun updateBook(id: Long, title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "", thickMode: Boolean = true) {
         queries.updateBook(
             title = title,
             author = author,
             totalPages = totalPages.toLong(),
             type = type.toLong(),
             coverPath = coverPath,
+            thickMode = if (thickMode) 1L else 0L,
             id = id
         )
     }
@@ -58,6 +60,29 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
 
     fun getChapterById(id: Long): ChapterEntity? {
         return queries.selectChapterById(id).executeAsOneOrNull()?.toEntity()
+    }
+
+    /**
+     * 获取或创建默认章节（非厚读模式使用）。
+     * 如果该书已有章节则返回第一个，否则创建一个总段落数等于总页数的默认章节。
+     */
+    fun getOrCreateDefaultChapter(bookId: Long): ChapterEntity {
+        val existing = queries.selectChaptersByBookId(bookId).executeAsList()
+        if (existing.isNotEmpty()) return existing.first().toEntity()
+
+        val book = queries.selectBookById(bookId).executeAsOne()
+        val id = queries.insertChapter(
+            bookId = bookId,
+            chapterNumber = 1L,
+            title = "",
+            paragraphCount = book.totalPages,
+            createdAt = Clock.System.now().toEpochMilliseconds()
+        ).getValue()
+
+        for (i in 0 until book.totalPages.toInt()) {
+            queries.insertBreadcrumb(chapterId = id, paragraphIndex = i.toLong())
+        }
+        return queries.selectChapterById(id).executeAsOne().toEntity()
     }
 
     fun insertChapter(bookId: Long, chapterNumber: Int, title: String, paragraphCount: Int): Long {
@@ -162,7 +187,8 @@ data class BookEntity(
     val totalPages: Int,
     val type: Int,
     val coverPath: String,
-    val createdAt: Long
+    val createdAt: Long,
+    val thickMode: Boolean = true
 )
 
 data class ChapterEntity(
@@ -197,7 +223,8 @@ private fun com.biscuitbag.Book.toEntity() = BookEntity(
     totalPages = totalPages.toInt(),
     type = type.toInt(),
     coverPath = coverPath,
-    createdAt = createdAt
+    createdAt = createdAt,
+    thickMode = thickMode != 0L
 )
 
 private fun com.biscuitbag.Chapter.toEntity() = ChapterEntity(

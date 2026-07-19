@@ -30,7 +30,14 @@ fun App(
                 viewModel = viewModel,
                 onAddBook = { navController.navigate("book/add") },
                 onEditBook = { id -> navController.navigate("book/edit/$id") },
-                onOpenBook = { id -> navController.navigate("book/$id/chapters") },
+                onOpenBook = { id ->
+                    val book = repository.getBookById(id)
+                    if (book?.thickMode == true) {
+                        navController.navigate("book/$id/chapters")
+                    } else {
+                        navController.navigate("book/$id/read")
+                    }
+                },
                 onStats = { navController.navigate("stats") },
                 onImport = { navController.navigate("import") }
             )
@@ -112,6 +119,20 @@ fun App(
         ) { backStackEntry ->
             val chapterId = backStackEntry.arguments?.getLong("chapterId") ?: return@composable
             val viewModel = remember { ReadingViewModel(repository, chapterId) }
+            ReadingScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 非厚读模式：直接阅读（自动创建或使用默认章节）
+        composable(
+            "book/{bookId}/read",
+            arguments = listOf(navArgument("bookId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getLong("bookId") ?: return@composable
+            val chapter = remember { repository.getOrCreateDefaultChapter(bookId) }
+            val viewModel = remember { ReadingViewModel(repository, chapter.id) }
             ReadingScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() }

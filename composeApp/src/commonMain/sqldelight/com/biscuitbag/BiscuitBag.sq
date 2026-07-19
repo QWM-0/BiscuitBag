@@ -6,7 +6,8 @@ CREATE TABLE Book (
     totalPages INTEGER NOT NULL DEFAULT 0,
     type INTEGER NOT NULL DEFAULT 0,
     coverPath TEXT NOT NULL DEFAULT '',
-    createdAt INTEGER NOT NULL
+    createdAt INTEGER NOT NULL,
+    thickMode INTEGER NOT NULL DEFAULT 1
 );
 
 -- 章节表
@@ -51,11 +52,11 @@ SELECT * FROM Book WHERE id = ?;
 
 -- 插入书籍
 insertBook:
-INSERT INTO Book (title, author, totalPages, type, coverPath, createdAt) VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO Book (title, author, totalPages, type, coverPath, createdAt, thickMode) VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- 更新书籍
 updateBook:
-UPDATE Book SET title = ?, author = ?, totalPages = ?, type = ?, coverPath = ? WHERE id = ?;
+UPDATE Book SET title = ?, author = ?, totalPages = ?, type = ?, coverPath = ?, thickMode = ? WHERE id = ?;
 
 -- 删除书籍
 deleteBook:
