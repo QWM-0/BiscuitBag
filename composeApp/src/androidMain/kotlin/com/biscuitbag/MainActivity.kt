@@ -1,14 +1,17 @@
 package com.biscuitbag
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import com.biscuitbag.database.DatabaseDriverFactory
 import com.biscuitbag.import.EpubImporter
 import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
 
@@ -19,11 +22,67 @@ class MainActivity : ComponentActivity() {
     }
 
     private var onCoverPicked: ((String) -> Unit)? = null
+    private var pendingCoverUri: Uri? = null
 
     private val pickCoverLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { saveCoverImage(it) }
+        uri?.let { launchCrop(it) }
+    }
+
+    private val cropLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val bitmap = result.data?.extras?.get("data") as? Bitmap
+            if (bitmap != null) {
+                saveCroppedBitmap(bitmap)
+            } else {
+                // 裁剪返回无 bitmap，用原图
+                pendingCoverUri?.let { saveCoverImage(it) }
+            }
+        } else {
+            // 裁剪取消或不支持，用原图
+            pendingCoverUri?.let { saveCoverImage(it) }
+        }
+        pendingCoverUri = null
+    }
+
+    private fun launchCrop(uri: Uri) {
+        pendingCoverUri = uri
+        try {
+            val intent = Intent("com.android.camera.action.CROP").apply {
+                setDataAndType(uri, "image/*")
+                putExtra("crop", "true")
+                putExtra("aspectX", 5)
+                putExtra("aspectY", 7)
+                putExtra("outputX", 400)
+                putExtra("outputY", 560)
+                putExtra("scale", true)
+                putExtra("return-data", true)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            cropLauncher.launch(intent)
+        } catch (e: Exception) {
+            // 设备不支持裁剪，直接用原图
+            saveCoverImage(uri)
+            pendingCoverUri = null
+        }
+    }
+
+    private fun saveCroppedBitmap(bitmap: Bitmap) {
+        try {
+            val coverDir = File(filesDir, "covers")
+            coverDir.mkdirs()
+            val coverFile = File(coverDir, "cover_${System.currentTimeMillis()}.jpg")
+            FileOutputStream(coverFile).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+            }
+            onCoverPicked?.invoke(coverFile.absolutePath)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            pendingCoverUri?.let { saveCoverImage(it) }
+        }
     }
 
     private fun saveCoverImage(uri: Uri) {

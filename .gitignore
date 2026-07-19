@@ -17,3 +17,5 @@ Thumbs.db
 
 # Gradle wrapper jar (included, but keep the properties)
 !gradle/wrapper/gradle-wrapper.jar
+kimi-export-session_*.md
+screenshot.png

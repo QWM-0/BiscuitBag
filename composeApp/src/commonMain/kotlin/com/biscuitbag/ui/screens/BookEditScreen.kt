@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.biscuitbag.ui.viewmodel.BookEditViewModel
+import com.biscuitbag.util.loadImageBitmap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +53,7 @@ fun BookEditScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 封面区域
+            val coverBitmap = remember(coverPath) { loadImageBitmap(coverPath) }
             val coverModifier = Modifier
                 .size(100.dp, 140.dp)
                 .clip(RoundedCornerShape(8.dp))
@@ -61,14 +63,19 @@ fun BookEditScreen(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                if (coverPath.isNotBlank()) {
-                    // TODO: 加载本地图片 - 需要平台特定的图片加载库
-                    Box(
-                        modifier = coverModifier,
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("📖", style = MaterialTheme.typography.headlineLarge)
-                    }
+                if (coverBitmap != null) {
+                    // 显示已加载的封面图片，点击可重新选择
+                    Image(
+                        bitmap = coverBitmap,
+                        contentDescription = "封面",
+                        modifier = coverModifier.then(
+                            if (onPickCover != null) {
+                                Modifier.clickable {
+                                    onPickCover { path -> viewModel.setCoverPath(path) }
+                                }
+                            } else { Modifier }
+                        )
+                    )
                 } else if (onPickCover != null) {
                     Box(
                         modifier = coverModifier.clickable {

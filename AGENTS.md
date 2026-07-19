@@ -75,6 +75,7 @@ BiscuitBag/
 - 文件：`BiscuitBag.sq`（SQLDelight 格式）
 - 生成的包名：`com.biscuitbag.database`
 - 数据库名：`biscuitbag.db`
+- 迁移文件：`composeApp/src/commonMain/sqldelight/migrations/`（`.sqm` 格式，按数字编号，如 `1.sqm`、`2.sqm`）
 - 表：
   - `Book` — 书籍（id, title, author, totalPages, type, coverPath, createdAt）
   - `Chapter` — 章节（id, bookId FK, chapterNumber, title, paragraphCount, createdAt）

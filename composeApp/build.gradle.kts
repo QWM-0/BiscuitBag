@@ -79,3 +79,6 @@ sqldelight {
         }
     }
 }
+
+// SQLDelight 迁移文件目录：composeApp/src/commonMain/sqldelight/migrations/
+// 表结构变更时，在该目录下创建 1.sqm、2.sqm 等迁移文件

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.biscuitbag.data.repository.BookEntity
 import com.biscuitbag.ui.viewmodel.BookListViewModel
+import com.biscuitbag.util.loadImageBitmap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,7 +97,8 @@ fun BookCard(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 封面占位
+            // 封面
+            val coverBitmap = remember(book.coverPath) { loadImageBitmap(book.coverPath) }
             Box(
                 modifier = Modifier
                     .size(60.dp, 80.dp)
@@ -104,10 +106,18 @@ fun BookCard(
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    "📖",
-                    style = MaterialTheme.typography.headlineMedium
-                )
+                if (coverBitmap != null) {
+                    Image(
+                        bitmap = coverBitmap,
+                        contentDescription = "封面",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text(
+                        "📖",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
             }
 
             Spacer(Modifier.width(12.dp))
