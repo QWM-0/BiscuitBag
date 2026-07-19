@@ -1,13 +1,20 @@
 package com.biscuitbag
 
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.biscuitbag.data.repository.BiscuitBagRepository
+import com.biscuitbag.import.WRShelfResponse
 import com.biscuitbag.ui.screens.*
 import com.biscuitbag.ui.viewmodel.*
 
@@ -15,7 +22,8 @@ import com.biscuitbag.ui.viewmodel.*
 fun App(
     repository: BiscuitBagRepository,
     onImportEpub: (() -> Unit)? = null,
-    onPickCover: ((onResult: (String) -> Unit) -> Unit)? = null
+    onPickCover: ((onResult: (String) -> Unit) -> Unit)? = null,
+    fetchWeChatShelf: (suspend (String) -> WRShelfResponse)? = null
 ) {
     val navController = rememberNavController()
 
@@ -148,10 +156,90 @@ fun App(
             )
         }
 
-        // 导入电子书
+        // 导入选择界面
         composable("import") {
-            onImportEpub?.invoke()
-            navController.popBackStack()
+            ImportOptionsScreen(
+                onImportEpub = {
+                    onImportEpub?.invoke()
+                    navController.popBackStack()
+                },
+                onImportWeChat = {
+                    navController.navigate("import/weread")
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 微信读书导入
+        composable("import/weread") {
+            if (fetchWeChatShelf != null) {
+                WeChatReadImportScreen(
+                    repository = repository,
+                    onBack = { navController.popBackStack() },
+                    fetchShelf = fetchWeChatShelf
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("微信读书导入不可用（平台未实现）")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 导入方式选择界面。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ImportOptionsScreen(
+    onImportEpub: () -> Unit,
+    onImportWeChat: () -> Unit,
+    onBack: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("导入书籍") },
+                navigationIcon = {
+                    TextButton(onClick = onBack) { Text("返回") }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                "选择导入方式",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(32.dp))
+
+            Button(
+                onClick = onImportEpub,
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+            ) {
+                Text("从 EPUB 导入", style = MaterialTheme.typography.titleMedium)
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = onImportWeChat,
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+            ) {
+                Text("从微信读书导入", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }

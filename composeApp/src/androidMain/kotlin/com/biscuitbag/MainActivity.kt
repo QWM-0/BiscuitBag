@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import com.biscuitbag.database.DatabaseDriverFactory
 import com.biscuitbag.import.EpubImporter
+import com.biscuitbag.import.WeChatReadReader
 import java.io.File
 import java.io.FileOutputStream
 
@@ -106,6 +107,8 @@ class MainActivity : ComponentActivity() {
         val database = com.biscuitbag.database.BiscuitBagDatabase(driverFactory.createDriver())
         val repository = com.biscuitbag.data.repository.BiscuitBagRepository(database)
 
+        val weChatReadReader = WeChatReadReader()
+
         setContent {
             App(
                 repository = repository,
@@ -115,6 +118,9 @@ class MainActivity : ComponentActivity() {
                 onPickCover = { onResult ->
                     onCoverPicked = onResult
                     pickCoverLauncher.launch("image/*")
+                },
+                fetchWeChatShelf = { cookie ->
+                    weChatReadReader.fetchShelf(cookie)
                 }
             )
         }

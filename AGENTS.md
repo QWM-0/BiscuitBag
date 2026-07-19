@@ -41,7 +41,10 @@ BiscuitBag/
         │   │       │   ├── ChapterListScreen.kt    # 章节列表
         │   │       │   ├── ChapterEditScreen.kt    # 添加/编辑章节
         │   │       │   ├── ReadingScreen.kt        # 阅读界面（饼干屑网格）
-        │   │       │   └── StatsScreen.kt          # 阅读统计
+        │   │       │   ├── StatsScreen.kt          # 阅读统计
+        │   │       │   └── WeChatReadImportScreen.kt # 微信读书导入界面
+        │   │       ├── import/
+        │   │       │   └── WeChatReadModels.kt     # 微信读书 API 数据模型
         │   │       └── viewmodel/
         │   │           ├── BookListViewModel.kt
         │   │           ├── BookEditViewModel.kt
@@ -59,12 +62,13 @@ BiscuitBag/
                 ├── database/
                 │   └── DatabaseDriverFactory.kt    # actual 实现（AndroidSqliteDriver）
                 └── import/
-                    └── EpubImporter.kt             # EPUB 解析与导入
+                    ├── EpubImporter.kt             # EPUB 解析与导入
+                    └── WeChatReadReader.kt         # 微信读书 API 网络请求
 ```
 
 ## 架构
 
-- **导航**：单 Activity (`MainActivity`) 内使用 `NavHost` 手动管理路由，共 8 条路由（见 `App.kt`）。
+- **导航**：单 Activity (`MainActivity`) 内使用 `NavHost` 手动管理路由，共 10 条路由（见 `App.kt`）。
 - **状态管理**：每个 Screen 对应一个 ViewModel，使用 `MutableStateFlow` + `collectAsState()` 驱动 UI。ViewModel 持有 `BiscuitBagRepository` 引用。
 - **数据层**：`BiscuitBagRepository` 封装所有 SQLDelight 查询操作，直接暴露同步方法（非 Flow，除 `getAllBooks` 外）。实体类（`BookEntity`、`ChapterEntity`、`BreadcrumbEntity`、`ReadingRecordEntity`）定义在 repository 文件中。
 - **数据库**：4 张表 — `Book`、`Chapter`、`Breadcrumb`、`ReadingRecord`。表定义和命名 SQL 查询均写在 `BiscuitBag.sq` 中，SQLDelight 编译时生成类型安全的 Kotlin 访问代码。
@@ -91,8 +95,9 @@ BiscuitBag/
 5. **厚读模式**：`thickMode` 控制是否分章节。开启（默认）→ 分章节管理饼干屑；关闭 → 整本书共用一套饼干屑，点击书籍直接进入阅读页，跳过章节列表。
 6. 导航路由参数：`bookId` 和 `chapterId` 均使用 `NavType.LongType`。
 5. Entity 类定义为 data class，放置于 `BiscuitBagRepository.kt` 文件底部，并有 SQLDelight 生成类型的私有扩展函数 `toEntity()`。
-6. 导入路由（`"import"`）：composable 中直接调用 `onImportEpub?.invoke()` 并 `popBackStack()`。
+6. 导入路由（`"import"`）：显示导入方式选择界面（EPUB / 微信读书）。EPUB 触发 `onImportEpub?.invoke()` 并 `popBackStack()`；微信读书跳转到 `"import/weread"` 路由。
 7. EPUB 导入在 `MainActivity` 中处理（非 Composable），导入完成后调用 `recreate()` 刷新界面。
+8. 微信读书导入：用户在 `WeChatReadImportScreen` 中粘贴 Cookie（从 weread.qq.com 开发者工具获取），点击获取书架后选择书籍批量导入。网络请求委托给 `WeChatReadReader`（androidMain，使用 `java.net.HttpURLConnection`）。
 
 ## 构建和运行
 

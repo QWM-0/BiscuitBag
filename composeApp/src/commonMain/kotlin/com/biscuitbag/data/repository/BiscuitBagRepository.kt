@@ -24,8 +24,8 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
         return queries.selectBookById(id).executeAsOneOrNull()?.toEntity()
     }
 
-    fun insertBook(title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "", thickMode: Boolean = true) {
-        queries.insertBook(
+    fun insertBook(title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "", thickMode: Boolean = true): Long {
+        return queries.insertBook(
             title = title,
             author = author,
             totalPages = totalPages.toLong(),
@@ -33,7 +33,7 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
             coverPath = coverPath,
             createdAt = Clock.System.now().toEpochMilliseconds(),
             thickMode = if (thickMode) 1L else 0L
-        )
+        ).getValue()
     }
 
     fun updateBook(id: Long, title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "", thickMode: Boolean = true) {
