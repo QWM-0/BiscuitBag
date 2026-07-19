@@ -120,6 +120,17 @@ APK 产物路径：`composeApp/build/outputs/apk/debug/composeApp-debug.apk`
 
 构建产物（APK）会上传为 Artifact，可在构建完成后下载。
 
+### 发布 APK
+
+另有发布工作流 `.github/workflows/release.yml`，两种触发方式：
+
+| 触发方式 | 用法 |
+|---------|------|
+| 打 tag 推送 | `git tag v1.0.0 && git push --tags` |
+| 手动触发 | GitHub Actions → **Release APK** → **Run workflow** → 填版本号 |
+
+发布后 APK 会上传到 GitHub Releases 页面，国内用户可将下载链接中的 `github.com` 替换为 `hub.fastgit.org` 加速。
+
 ## 测试
 
 项目当前没有任何单元测试或 UI 测试。添加测试时：
