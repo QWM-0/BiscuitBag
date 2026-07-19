@@ -1,0 +1,134 @@
+-- 书籍表
+CREATE TABLE Book (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    author TEXT NOT NULL DEFAULT '',
+    totalPages INTEGER NOT NULL DEFAULT 0,
+    type INTEGER NOT NULL DEFAULT 0,
+    coverPath TEXT NOT NULL DEFAULT '',
+    createdAt INTEGER NOT NULL
+);
+
+-- 章节表
+CREATE TABLE Chapter (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    bookId INTEGER NOT NULL,
+    chapterNumber INTEGER NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    paragraphCount INTEGER NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL,
+    FOREIGN KEY (bookId) REFERENCES Book(id) ON DELETE CASCADE
+);
+
+-- 饼干屑表（每个段落一个）
+CREATE TABLE Breadcrumb (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    chapterId INTEGER NOT NULL,
+    paragraphIndex INTEGER NOT NULL,
+    isRead INTEGER NOT NULL DEFAULT 0,
+    readAt INTEGER,
+    FOREIGN KEY (chapterId) REFERENCES Chapter(id) ON DELETE CASCADE
+);
+
+-- 阅读记录（每日统计）
+CREATE TABLE ReadingRecord (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    breadcrumbsCompleted INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX idx_reading_record_date ON ReadingRecord(date);
+
+-- ===== 查询 =====
+
+-- 获取所有书籍
+selectAllBooks:
+SELECT * FROM Book ORDER BY createdAt DESC;
+
+-- 按 ID 获取书籍
+selectBookById:
+SELECT * FROM Book WHERE id = ?;
+
+-- 插入书籍
+insertBook:
+INSERT INTO Book (title, author, totalPages, type, coverPath, createdAt) VALUES (?, ?, ?, ?, ?, ?);
+
+-- 更新书籍
+updateBook:
+UPDATE Book SET title = ?, author = ?, totalPages = ?, type = ?, coverPath = ? WHERE id = ?;
+
+-- 删除书籍
+deleteBook:
+DELETE FROM Book WHERE id = ?;
+
+-- 获取某本书的所有章节
+selectChaptersByBookId:
+SELECT * FROM Chapter WHERE bookId = ? ORDER BY chapterNumber;
+
+-- 获取某个章节
+selectChapterById:
+SELECT * FROM Chapter WHERE id = ?;
+
+-- 插入章节
+insertChapter:
+INSERT INTO Chapter (bookId, chapterNumber, title, paragraphCount, createdAt) VALUES (?, ?, ?, ?, ?);
+
+-- 更新章节
+updateChapter:
+UPDATE Chapter SET title = ?, paragraphCount = ? WHERE id = ?;
+
+-- 删除章节
+deleteChapter:
+DELETE FROM Chapter WHERE id = ?;
+
+-- 获取某章节所有饼干屑
+selectBreadcrumbsByChapterId:
+SELECT * FROM Breadcrumb WHERE chapterId = ? ORDER BY paragraphIndex;
+
+-- 批量插入饼干屑
+insertBreadcrumb:
+INSERT INTO Breadcrumb (chapterId, paragraphIndex, isRead) VALUES (?, ?, 0);
+
+-- 更新饼干屑状态（打勾/取消）
+updateBreadcrumb:
+UPDATE Breadcrumb SET isRead = ?, readAt = ? WHERE id = ?;
+
+-- 获取某章节已读饼干屑数量
+countReadBreadcrumbs:
+SELECT COUNT(*) FROM Breadcrumb WHERE chapterId = ? AND isRead = 1;
+
+-- 获取某书籍所有章节的已读饼干屑总数
+countReadBreadcrumbsByBookId:
+SELECT COUNT(*) FROM Breadcrumb
+INNER JOIN Chapter ON Breadcrumb.chapterId = Chapter.id
+WHERE Chapter.bookId = ? AND Breadcrumb.isRead = 1;
+
+-- 获取某书籍所有章节的饼干屑总数
+countTotalBreadcrumbsByBookId:
+SELECT COUNT(*) FROM Breadcrumb
+INNER JOIN Chapter ON Breadcrumb.chapterId = Chapter.id
+WHERE Chapter.bookId = ?;
+
+-- 获取或创建今日阅读记录
+selectReadingRecordByDate:
+SELECT * FROM ReadingRecord WHERE date = ?;
+
+-- 插入阅读记录
+insertReadingRecord:
+INSERT INTO ReadingRecord (date, breadcrumbsCompleted) VALUES (?, ?);
+
+-- 更新阅读记录
+updateReadingRecord:
+UPDATE ReadingRecord SET breadcrumbsCompleted = breadcrumbsCompleted + 1 WHERE date = ?;
+
+-- 获取所有阅读记录
+selectAllReadingRecords:
+SELECT * FROM ReadingRecord ORDER BY date DESC;
+
+-- 获取总阅读天数
+countReadingDays:
+SELECT COUNT(*) FROM ReadingRecord;
+
+-- 获取总完成饼干屑数
+totalCompletedBreadcrumbs:
+SELECT COALESCE(SUM(breadcrumbsCompleted), 0) FROM ReadingRecord;

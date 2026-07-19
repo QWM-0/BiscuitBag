@@ -1,0 +1,19 @@
+*.iml
+.gradle/
+build/
+.idea/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gradle wrapper jar (included, but keep the properties)
+!gradle/wrapper/gradle-wrapper.jar
