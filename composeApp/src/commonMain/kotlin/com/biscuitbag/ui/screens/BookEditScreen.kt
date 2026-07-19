@@ -108,11 +108,11 @@ fun BookEditScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = bookType == 0, onClick = { viewModel.setBookType(0) })
-                    Text("书本", modifier = Modifier.padding(start = 4.dp))
+                    Text("纸质书", modifier = Modifier.padding(start = 4.dp))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = bookType == 1, onClick = { viewModel.setBookType(1) })
-                    Text("自定义", modifier = Modifier.padding(start = 4.dp))
+                    Text("电子书", modifier = Modifier.padding(start = 4.dp))
                 }
             }
 
@@ -154,9 +154,12 @@ fun BookEditScreen(
             OutlinedTextField(
                 value = totalPages,
                 onValueChange = { viewModel.updateTotalPages(it) },
-                label = { Text("总页数") },
+                label = { Text(if (bookType == 0) "总页数" else "总段落数") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                supportingText = {
+                    Text(if (bookType == 0) "纸质书：页数 × 4 自动估算饼干屑" else "电子书：按百分比划分饼干屑")
+                }
             )
 
             Spacer(Modifier.height(8.dp))

@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.biscuitbag.ui.viewmodel.ChapterEditViewModel
@@ -17,10 +18,13 @@ fun ChapterEditScreen(
 ) {
     val title by viewModel.title.collectAsState()
     val paragraphCount by viewModel.paragraphCount.collectAsState()
-    val usePageEstimate by viewModel.usePageEstimate.collectAsState()
+    val useAutoEstimate by viewModel.useAutoEstimate.collectAsState()
     val pagesForChapter by viewModel.pagesForChapter.collectAsState()
+    val percentForChapter by viewModel.percentForChapter.collectAsState()
     val isEdit by viewModel.isEdit.collectAsState()
     val saved by viewModel.saved.collectAsState()
+    val bookType = viewModel.bookType
+    val isPaper = bookType == 0
 
     LaunchedEffect(saved) {
         if (saved) onBack()
@@ -56,36 +60,50 @@ fun ChapterEditScreen(
                 style = MaterialTheme.typography.titleSmall
             )
 
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            // 自动估算选项
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(
-                    selected = usePageEstimate,
-                    onClick = { viewModel.setUsePageEstimate(true) }
+                    selected = useAutoEstimate,
+                    onClick = { viewModel.setUseAutoEstimate(true) }
                 )
-                Text("按页数估算", modifier = Modifier.padding(start = 4.dp))
-            }
-
-            if (usePageEstimate) {
-                OutlinedTextField(
-                    value = pagesForChapter,
-                    onValueChange = { viewModel.updatePagesForChapter(it) },
-                    label = { Text("本章页数") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    supportingText = {
-                        Text("按每页约 4 段估算，预估 ${viewModel.estimatedParagraphs()} 个饼干屑")
-                    }
+                Text(
+                    if (isPaper) "按页数估算" else "按百分比划分",
+                    modifier = Modifier.padding(start = 4.dp)
                 )
             }
 
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            if (useAutoEstimate) {
+                if (isPaper) {
+                    OutlinedTextField(
+                        value = pagesForChapter,
+                        onValueChange = { viewModel.updatePagesForChapter(it) },
+                        label = { Text("本章页数") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        supportingText = { Text(viewModel.estimateHint()) }
+                    )
+                } else {
+                    OutlinedTextField(
+                        value = percentForChapter,
+                        onValueChange = { viewModel.updatePercentForChapter(it) },
+                        label = { Text("本章占比（%）") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        supportingText = { Text(viewModel.estimateHint()) }
+                    )
+                }
+            }
+
+            // 手动输入
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(
-                    selected = !usePageEstimate,
-                    onClick = { viewModel.setUsePageEstimate(false) }
+                    selected = !useAutoEstimate,
+                    onClick = { viewModel.setUseAutoEstimate(false) }
                 )
                 Text("手动输入段落数", modifier = Modifier.padding(start = 4.dp))
             }
 
-            if (!usePageEstimate) {
+            if (!useAutoEstimate) {
                 OutlinedTextField(
                     value = paragraphCount,
                     onValueChange = { viewModel.updateParagraphCount(it) },
