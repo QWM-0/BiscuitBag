@@ -33,8 +33,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
 
       - name: Determine tag name
         id: tag
@@ -57,7 +57,7 @@ jobs:
 
             ### 下载
 
-            - [BiscuitBag-debug.apk](https://github.com/QWM-0/BiscuitBag/releases/download/${{ steps.tag.outputs.tag }}/BiscuitBag-debug.apk) — Debug APK，直接安装到 Android 设备
+            - [BiscuitBag-release.apk](https://github.com/QWM-0/BiscuitBag/releases/download/${{ steps.tag.outputs.tag }}/BiscuitBag-release.apk) — Release APK，直接安装到 Android 设备
 
             ### 安装说明
 
@@ -66,4 +66,4 @@ jobs:
             3. 安装完成后即可使用
 
             > 如果下载速度慢，可将链接中的 `github.com` 替换为 `hub.fastgit.org` 加速。
-          files: composeApp/build/outputs/apk/debug/*.apk
+          files: composeApp/build/outputs/apk/release/*.apk
