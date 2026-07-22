@@ -24,9 +24,11 @@ class BiscuitBagCRUDTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        // 固定测试数据库名，每次 Before 删除重建
-        context.deleteDatabase("biscuitbag_test")
-        val driver = AndroidSqliteDriver(BiscuitBagDatabase.Schema, context, "biscuitbag_test")
+        // 用唯一命名避免跨测试冲突
+        val driver = AndroidSqliteDriver(
+            BiscuitBagDatabase.Schema, context,
+            "biscuitbag_test_${System.nanoTime()}"
+        )
         driver.execute(null, "PRAGMA foreign_keys = ON", 0)
         database = BiscuitBagDatabase(driver)
         repository = BiscuitBagRepository(database)
@@ -34,8 +36,11 @@ class BiscuitBagCRUDTest {
 
     @After
     fun tearDown() {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        context.deleteDatabase("biscuitbag_test")
+        // 清理连接
+        try {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            context.deleteDatabase("biscuitbag_test")
+        } catch (_: Exception) {}
     }
 
     // ==================== Book CRUD ====================
