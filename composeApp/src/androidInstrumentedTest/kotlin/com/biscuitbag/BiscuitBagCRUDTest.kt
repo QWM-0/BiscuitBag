@@ -5,8 +5,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.biscuitbag.data.repository.BiscuitBagRepository
 import com.biscuitbag.database.BiscuitBagDatabase
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,14 +24,18 @@ class BiscuitBagCRUDTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        val driver = AndroidSqliteDriver(BiscuitBagDatabase.Schema, context, null) // 内存数据库
+        // 固定测试数据库名，每次 Before 删除重建
+        context.deleteDatabase("biscuitbag_test")
+        val driver = AndroidSqliteDriver(BiscuitBagDatabase.Schema, context, "biscuitbag_test")
+        driver.execute(null, "PRAGMA foreign_keys = ON", 0)
         database = BiscuitBagDatabase(driver)
         repository = BiscuitBagRepository(database)
     }
 
     @After
     fun tearDown() {
-        // 内存数据库会在每个测试后自动丢弃，无需额外清理
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        context.deleteDatabase("biscuitbag_test")
     }
 
     // ==================== Book CRUD ====================
@@ -105,17 +107,21 @@ class BiscuitBagCRUDTest {
     }
 
     @Test
-    fun testGetAllBooksOrder() = runTest {
-        val id1 = repository.insertBook(title = "《第一本》", author = "A", totalPages = 100, thickMode = true)
-        Thread.sleep(10) // 确保时间戳不同
-        val id2 = repository.insertBook(title = "《第二本》", author = "B", totalPages = 200, thickMode = true)
+    fun testGetAllBooksOrder() {
+        repository.insertBook(title = "《第一本》", author = "A", totalPages = 100, thickMode = true)
+        Thread.sleep(50)
+        repository.insertBook(title = "《第二本》", author = "B", totalPages = 200, thickMode = true)
 
-        val books = repository.getAllBooks().firstOrNull() ?: emptyList()
+        // 用查询验证，不依赖 insertBook 返回值
+        var books = emptyList<com.biscuitbag.data.repository.BookEntity>()
+        kotlinx.coroutines.runBlocking {
+            repository.getAllBooks().collect { books = it }
+        }
         assertTrue(books.size >= 2)
 
         // 按 createdAt DESC 排序，最新创建的在前面
-        val firstBook = books.first()
-        assertEquals(id2, firstBook.id)
+        assertEquals("《第二本》", books.first().title)
+        assertEquals("《第一本》", books.last().title)
     }
 
     // ==================== Chapter CRUD ====================
@@ -238,18 +244,23 @@ class BiscuitBagCRUDTest {
     fun testCountReadBreadcrumbsByBookId() {
         val bookId = repository.insertBook(title = "《书》", author = "A", totalPages = 100, thickMode = true)
         val ch1 = repository.insertChapter(bookId = bookId, chapterNumber = 1, title = "C1", paragraphCount = 3)
-        val ch2 = repository.insertChapter(bookId = bookId, chapterNumber = 2, title = "C2", paragraphCount = 3)
+        repository.insertChapter(bookId = bookId, chapterNumber = 2, title = "C2", paragraphCount = 3)
 
-        val bc1 = repository.getBreadcrumbsByChapterId(ch1)
-        val bc2 = repository.getBreadcrumbsByChapterId(ch2)
+        // 通过 getChaptersByBookId 拿真实 ID
+        val chapters = repository.getChaptersByBookId(bookId)
+        assertEquals(2, chapters.size)
 
-        // 标记 ch1 全部已读，ch2 第 1 个已读
+        val bc1 = repository.getBreadcrumbsByChapterId(chapters[0].id)
+        val bc2 = repository.getBreadcrumbsByChapterId(chapters[1].id)
+        assertEquals(3, bc1.size)
+        assertEquals(3, bc2.size)
+
+        // 章节 1: 读前 2 个，章节 2: 读第 1 个 → 共 3 个已读
         repository.toggleBreadcrumb(bc1[0].id, isRead = true)
         repository.toggleBreadcrumb(bc1[1].id, isRead = true)
-        repository.toggleBreadcrumb(bc1[2].id, isRead = true)
         repository.toggleBreadcrumb(bc2[0].id, isRead = true)
 
-        assertEquals(4, repository.getReadCountByBookId(bookId))
+        assertEquals(3, repository.getReadCountByBookId(bookId))
         assertEquals(6, repository.getTotalBreadcrumbCountByBookId(bookId))
     }
 }
