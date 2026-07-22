@@ -133,3 +133,7 @@ SELECT COUNT(*) FROM ReadingRecord;
 -- 获取总完成饼干屑数
 totalCompletedBreadcrumbs:
 SELECT COALESCE(SUM(breadcrumbsCompleted), 0) FROM ReadingRecord;
+
+-- 获取最后插入行 ID
+lastInsertRowId:
+SELECT last_insert_rowid();

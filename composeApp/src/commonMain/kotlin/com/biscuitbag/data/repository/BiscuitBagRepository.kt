@@ -10,8 +10,8 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
 
     private val queries get() = database.biscuitBagQueries
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> QueryResult<T>.getValue(): T = (this as QueryResult.Value<T>).value
+    /** 获取刚插入行的主键 ID */
+    private fun lastInsertId(): Long = queries.lastInsertRowId().executeAsOneOrNull() ?: 0L
 
     // ===== 书籍 =====
 
@@ -25,7 +25,7 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
     }
 
     fun insertBook(title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "", thickMode: Boolean = true): Long {
-        return queries.insertBook(
+        queries.insertBook(
             title = title,
             author = author,
             totalPages = totalPages.toLong(),
@@ -33,7 +33,8 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
             coverPath = coverPath,
             createdAt = Clock.System.now().toEpochMilliseconds(),
             thickMode = if (thickMode) 1L else 0L
-        ).getValue()
+        )
+        return lastInsertId()
     }
 
     fun updateBook(id: Long, title: String, author: String, totalPages: Int, type: Int = 0, coverPath: String = "", thickMode: Boolean = true) {
@@ -71,13 +72,14 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
         if (existing.isNotEmpty()) return existing.first().toEntity()
 
         val book = queries.selectBookById(bookId).executeAsOne()
-        val id = queries.insertChapter(
+        queries.insertChapter(
             bookId = bookId,
             chapterNumber = 1L,
             title = "",
             paragraphCount = book.totalPages,
             createdAt = Clock.System.now().toEpochMilliseconds()
-        ).getValue()
+        )
+        val id = lastInsertId()
 
         for (i in 0 until book.totalPages.toInt()) {
             queries.insertBreadcrumb(chapterId = id, paragraphIndex = i.toLong())
@@ -86,13 +88,14 @@ class BiscuitBagRepository(private val database: BiscuitBagDatabase) {
     }
 
     fun insertChapter(bookId: Long, chapterNumber: Int, title: String, paragraphCount: Int): Long {
-        val id = queries.insertChapter(
+        queries.insertChapter(
             bookId = bookId,
             chapterNumber = chapterNumber.toLong(),
             title = title,
             paragraphCount = paragraphCount.toLong(),
             createdAt = Clock.System.now().toEpochMilliseconds()
-        ).getValue()
+        )
+        val id = lastInsertId()
 
         // 创建对应数量的饼干屑
         for (i in 0 until paragraphCount) {
