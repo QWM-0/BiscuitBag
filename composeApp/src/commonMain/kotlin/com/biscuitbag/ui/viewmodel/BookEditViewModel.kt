@@ -75,6 +75,9 @@ class BookEditViewModel(
     }
 
     companion object {
+        /** 包裹书名号《》 */
+        fun wrapTitle(title: String): String = "《$title》"
+
         /** 去掉《》 */
         fun unwrapTitle(title: String): String {
             return if (title.startsWith("《") && title.endsWith("》"))

@@ -5,12 +5,15 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.os.Process
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import com.biscuitbag.database.DatabaseDriverFactory
 import com.biscuitbag.import.EpubImporter
 import com.biscuitbag.import.WeChatReadReader
+import com.biscuitbag.util.ContextProvider
+import com.biscuitbag.util.Logger
 import java.io.File
 import java.io.FileOutputStream
 
@@ -102,6 +105,42 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 初始化 ContextProvider（必须在一切之前）
+        ContextProvider.appContext = applicationContext
+
+        // 设置全局异常捕获
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            // 记录异常日志
+            Logger.e("CrashHandler", "未捕获异常", throwable)
+
+            // 保存崩溃标志
+            try {
+                val prefs = ContextProvider.appContext
+                    .getSharedPreferences("crash", MODE_PRIVATE)
+                prefs.edit()
+                    .putBoolean("has_crash", true)
+                    .putString("crash_log_path", Logger.getLogFilePath())
+                    .apply()
+            } catch (_: Exception) {
+            }
+
+            // 启动日志导出界面
+            try {
+                val intent = Intent(ContextProvider.appContext, LogExportActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                ContextProvider.appContext.startActivity(intent)
+            } catch (_: Exception) {
+            }
+
+            // 交给默认处理器（或直接结束进程）
+            defaultHandler?.uncaughtException(thread, throwable)
+                ?: run {
+                    Process.killProcess(Process.myPid())
+                    System.exit(10)
+                }
+        }
 
         val driverFactory = DatabaseDriverFactory(this)
         val database = com.biscuitbag.database.BiscuitBagDatabase(driverFactory.createDriver())

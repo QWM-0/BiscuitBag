@@ -40,6 +40,17 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.sqldelight.android.driver)
         }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+
+        getByName("androidInstrumentedTest").dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.androidx.test.junit)
+            implementation(libs.androidx.test.core)
+            implementation(libs.androidx.test.runner)
+        }
     }
 }
 
@@ -53,6 +64,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
