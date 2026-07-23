@@ -7,8 +7,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Process
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.biscuitbag.database.DatabaseDriverFactory
 import com.biscuitbag.import.EpubImporter
 import com.biscuitbag.import.WeChatReadReader
@@ -18,6 +22,8 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
+
+    private var navController: NavHostController? = null
 
     private val pickEpubLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -149,7 +155,24 @@ class MainActivity : ComponentActivity() {
         val weChatReadReader = WeChatReadReader()
 
         setContent {
+            // 处理系统返回键：当导航栈为空时退出 App
+            val nc = rememberNavController()
+            this@MainActivity.navController = nc
+
+            androidx.compose.runtime.DisposableEffect(nc) {
+                val callback = object : OnBackPressedCallback(true) {
+                    override fun handleOnBackPressed() {
+                        if (!nc.popBackStack()) {
+                            finish()
+                        }
+                    }
+                }
+                this@MainActivity.onBackPressedDispatcher.addCallback(callback)
+                onDispose { callback.remove() }
+            }
+
             App(
+                navController = nc,
                 repository = repository,
                 onImportEpub = {
                     pickEpubLauncher.launch(arrayOf("application/epub+zip"))

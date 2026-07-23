@@ -8,10 +8,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.biscuitbag.data.repository.BiscuitBagRepository
 import com.biscuitbag.import.WRShelfResponse
@@ -20,12 +20,12 @@ import com.biscuitbag.ui.viewmodel.*
 
 @Composable
 fun App(
+    navController: NavHostController,
     repository: BiscuitBagRepository,
     onImportEpub: (() -> Unit)? = null,
     onPickCover: ((onResult: (String) -> Unit) -> Unit)? = null,
     fetchWeChatShelf: (suspend (String) -> WRShelfResponse)? = null
 ) {
-    val navController = rememberNavController()
 
     NavHost(
         navController = navController,
